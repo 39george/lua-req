@@ -16,6 +16,8 @@
 ---@alias req.QueryValue req.QueryScalar|req.QueryScalar[]
 ---@alias req.QueryParams table<string, req.QueryValue>
 
+---@alias Error string
+
 -- ---------------------------------------------------------------------------- --
 --                                Client & Opts                                 --
 -- ---------------------------------------------------------------------------- --
@@ -95,7 +97,7 @@
 ---@class req.RedirectPolicy
 ---@field max_redirects? integer
 ---@field strict? boolean
----@field end_to_end? boolean -- Preserve headers on redirects
+---@field end_to_end? boolean Preserve headers on redirects
 
 ---@class req.RetryBuilder
 ---@field max_retries? integer
@@ -119,11 +121,11 @@
 -- ---------------------------------------------------------------------------- --
 
 ---@class req.RequestOptions: req.ClientOptions
----@field headers? table<string, req.HeaderValue>     -- headers override/extend
----@field query? req.QueryParams                      -- query params (?a=1&b=2)
----@field body? string                                -- raw body (already encoded)
----@field json? any                                   -- lua value to encode as JSON
----@field timeout? integer                            -- Request timeout in seconds
+---@field headers? table<string, req.HeaderValue>     headers override/extend
+---@field query? req.QueryParams                      query params (?a=1&b=2)
+---@field body? string                                raw body (already encoded)
+---@field json? any                                   lua value to encode as JSON
+---@field timeout? integer                            Request timeout in seconds
 ---@field form? table<string, req.QueryScalar|req.QueryScalar[]>
 
 ---@class req.Request
@@ -140,12 +142,16 @@
 ---@field timeout fun(self: req.Request, ms: integer): req.Request
 ---@field send fun(self: req.Request): req.Response
 ---@field send_safe fun(self: req.Request): boolean, req.Response
+---@field send_checked fun(self: req.Request, opts: table): boolean, req.Response|Error|table
 
 ---@class req.Response
 ---@field status integer
 ---@field headers table<string, string>
 ---@field body string
 --- Methods
----@field json fun(self: req.Response): table
+---@field json fun(self: req.Response): boolean, table|Error
 ---@field text fun(self: req.Response): string
 ---@field bytes fun(self: req.Response): string
+---@field header fun(self: req.Response, name: string): req.HeaderValue? case-insensitive header lookup
+---@field raise_for_status fun(self: req.Response): req.Response
+---@field validate fun(self: req.Response, fn: fun(req.Response): table): boolean, table|Error

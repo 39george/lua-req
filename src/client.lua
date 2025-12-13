@@ -18,8 +18,8 @@ function Client:request(method, url, opts)
     method = method,
     url = url,
     opts = req_opts,
-    headers = util.merge(req_opts.headers, nil),
-    query = req_opts.query,
+    headers = util.merge(req_opts.headers or {}, {}),
+    query = util.merge(req_opts.query or {}, {}),
     body = req_opts.body,
   }, Request)
 end

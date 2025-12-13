@@ -74,4 +74,71 @@ function Request:send_safe()
   return pcall(function() return self:send() end)
 end
 
+function Request:send_checked(opts)
+  opts = opts or {}
+
+  local ok, res = self:send_safe()
+  if not ok then return false, res end
+
+  -- status check
+  if opts.status ~= nil then
+    local st = opts.status
+    local s = res.status
+    local pass = false
+
+    if type(st) == "number" then
+      pass = (s == st)
+    elseif type(st) == "table" then
+      for _, one in ipairs(st) do
+        if s == one then
+          pass = true
+          break
+        end
+      end
+    elseif type(st) == "function" then
+      local pok, pres = pcall(st, s, res)
+      if not pok then return false, pres end
+      pass = not not pres
+    end
+
+    if not pass then
+      return false, ("unexpected status: %s"):format(tostring(s))
+    end
+  end
+
+  if opts.content_type ~= nil then
+    local ct = res:content_type()
+    local want = opts.content_type
+    local pass = false
+
+    if type(want) == "string" then
+      pass = (ct == want)
+    elseif type(want) == "function" then
+      local pok, pres = pcall(want, ct, res)
+      if not pok then return false, pres end
+      pass = not not pres
+    end
+
+    if not pass then
+      return false, ("unexpected content-type: %s"):format(tostring(ct))
+    end
+  end
+
+  local data = res
+  if opts.json then
+    local jok, jv = res:json()
+    if not jok then return false, jv end
+    data = jv
+  end
+
+  if opts.validate then
+    local vok, v, err = pcall(opts.validate, data, res)
+    if not vok then return false, v end
+    if v == nil or v == false then return false, err or "validation failed" end
+    if v ~= true then data = v end -- если вернули “трансформ”
+  end
+
+  return true, data
+end
+
 return Request
