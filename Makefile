@@ -29,4 +29,3 @@ ifndef BIN
 	@exit 1
 endif
 	$(LUA) ./dev_bin/$(BIN).lua
-
